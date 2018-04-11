@@ -1,0 +1,16 @@
+body {
+    background-color: red;
+    color: white;
+}
+
+#image {
+    background-image: url(../images/img_1.jpg);
+    width: 720px;
+    height: 1080px;
+    transform: rotate(45deg);
+    box-shadow: 1px 1px 0 rgba(0, 0, 0, .25)
+}
+#aaa {
+    background-color: red;
+    color: white;
+}
