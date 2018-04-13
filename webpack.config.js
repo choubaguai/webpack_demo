@@ -5,20 +5,34 @@ const uglify = require('uglifyjs-webpack-plugin');
 const htmlPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const PurifyCSSPlugin = require("purifycss-webpack");
+const entry = require('./webpack_config/entry_webpack.js');
+const copyWebpackPlugin = require("copy-webpack-plugin");
+
+// console.log(encodeURIComponent(process.env.type));
+// if (process.env.type == "build") {
+//     let website = {
+//         publicPath: "http://wagon.com:1717/"
+//     }
+// } else {
+//     let website = {
+//         publicPath: "http://192.168.3.6:1717/"
+//     }
+// }
 
 let website = {
     publicPath: "http://192.168.3.6:1717/"
 }
 
-
 module.exports = {
-    devtool:'eval-source-map',
-    entry: {                //入口配置
-        entry: './src/entry.js'
+    devtool: 'eval-source-map',
+    entry: {
+        entry: './src/entry.js',
+        jquery: 'jquery',
+        vue: 'vue',
     },
     output: {               //出口配置
         path: path.resolve(__dirname, 'dist'),
-        filename: 'entry.js',
+        filename: '[name].js',
         publicPath: website.publicPath,
     },
     module: {
@@ -114,7 +128,7 @@ module.exports = {
                 test: /\.(jsx|js)$/,
                 use: {
                     loader: 'babel-loader',
-                    
+
                 },
                 exclude: /node_modules/
             }
@@ -123,7 +137,34 @@ module.exports = {
     },
     plugins: [
         //压缩js文件,开发环境注释掉，否则无法调试
+        new webpack.optimize.SplitChunksPlugin({
+            cacheGroups: {
+                default: {
+                    minChunks: 2,
+                    priority: -20,
+                    reuseExistingChunk: true,
+                },
+                //打包重复出现的代码
+                vendor: {
+                    chunks: 'initial',
+                    minChunks: 2,
+                    maxInitialRequests: 5, // The default limit is too small to showcase the effect
+                    minSize: 0, // This is example is too small to create commons chunks
+                    name: 'vendor'
+                },
+                //打包第三方类库
+                commons: {
+                    name: "commons",
+                    chunks: "initial",
+                    minChunks: Infinity
+                }
+            }
+        }),
         // new uglify(),
+        new webpack.ProvidePlugin({
+            $: "jquery",
+
+        }),
         new htmlPlugin({
             minify: {
                 removeAttributeQuotes: true
@@ -137,7 +178,13 @@ module.exports = {
         new ExtractTextPlugin("css/index.css"),
         new PurifyCSSPlugin({
             paths: glob.sync(path.join(__dirname, 'src/*.html')),
-        })
+        }),
+        new webpack.BannerPlugin('chaoge版权所有,大吉大利晚上吃鸡。'),
+        new copyWebpackPlugin([{
+            from: __dirname + '/src/public',
+            to: './public'
+        }]),
+        new webpack.HotModuleReplacementPlugin(),
     ],
     //服务操作，热更新
     devServer: {
@@ -145,5 +192,10 @@ module.exports = {
         host: '192.168.3.6',
         compress: true,
         port: 1717
-    }
+    },
+    watchOptions: {
+        poll: 1000,
+        aggregateTimeout: 300,
+        ignored: /node_modules/,
+    },
 };
